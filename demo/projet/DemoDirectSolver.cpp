@@ -53,11 +53,11 @@ int main (
   LU.WriteToStdout('\n');
 
 
-//  Vector<double,int> lu;
-//  DirectSolver::SolveLU( lu, A, rhs );
+  Vector<double,int> x;
+  DirectSolver::SolveLU( x, A, rhs );
 
-//  printf("\n lu \n");
-//  lu.WriteToStdout('\n');
+  printf("\n SolveLU \n");
+  x.WriteToStdout('\n');
 
 //  Vector<double,int> chol;
 //  DirectSolver::SolveCholesky( chol, A, rhs );
@@ -69,7 +69,7 @@ int main (
   Factor::LDLt( ldlt, A );
   printf("-------------------->>>> LDLt \n");
   ldlt.WriteToStdout('\n');
-  
+
 
 //  printf("\n ldlt \n");
 //  ldlt.WriteToStdout('\n');

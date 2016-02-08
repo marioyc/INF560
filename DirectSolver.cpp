@@ -138,6 +138,17 @@ int Forward (
         const MatrixDense<double,int>& L,
         const Vector<double,int>& rhs,
         const bool diag_one ) {
+  int n = L.GetNumbRows();
+  x.Allocate(n);
+
+  for(int i = 0;i < n;++i){
+    double b = rhs(i);
+
+    for(int j = 0;j < i;++j)
+      b -= L(i,j) * x(j);
+
+    x(i) = b;// / L(i,i);
+  }
 
   return 0;
 }
@@ -150,6 +161,17 @@ int Backward (
         const MatrixDense<double,int>& U,
         const Vector<double,int>& rhs,
         const bool diag_one ) {
+  int n = U.GetNumbRows();
+  x.Allocate(n);
+
+  for(int i = n - 1;i >= 0;--i){
+    double b = rhs(i);
+
+    for(int j = i + 1;j < n;++j)
+      b -= U(i,j) * x(j);
+
+    x(i) = b / U(i,i);
+  }
 
   return 0;
 }
@@ -161,6 +183,13 @@ int SolveLU (
         Vector<double,int>& x,
         MatrixDense<double,int>& A,
         const Vector<double,int>& rhs ) {
+  MatrixDense<double,int> lu;
+  Factor::LU(lu, A);
+
+  Vector<double,int> y;
+  Forward(y, lu, rhs, true);
+
+  Backward(x, lu, y, false);
 
   return 0;
 }
