@@ -62,7 +62,7 @@ int SplitMatrixToBlock (
     for(int j = 0;j < numb_node_p;++j)
       Aip(i,j) = A(list_node_i[i],list_node_p[j]);
 
-  Aip.Allocate(numb_node_p,numb_node_i);
+  Api.Allocate(numb_node_p,numb_node_i);
 
   for(int i = 0;i < numb_node_p;++i)
     for(int j = 0;j < numb_node_i;++j)
