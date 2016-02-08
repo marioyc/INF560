@@ -1,7 +1,7 @@
 /*!
 *  @file DirectSolver.cpp
 *  @internal manage data distribution
-*  @author Abal-Kassim Cheik Ahamed, Frédéric Magoulès, Sonia Toubaline
+*  @author Abal-Kassim Cheik Ahamed, Frï¿½dï¿½ric Magoulï¿½s, Sonia Toubaline
 *  @date Tue Nov 24 16:16:48 CET 2015
 *  @version 1.0
 *  @remarks
@@ -32,6 +32,31 @@ int LU (
         MatrixDense<double,int>& LU,
         const MatrixDense<double,int>& A ) {
 
+  int n = A.GetNumbRows();
+  LU.Allocate(n,n);
+
+  for(int i = 0;i < n;++i){
+      for(int j = 0;j < i;++j){
+        double sum = 0;
+
+        for(int k = 0;k < j;++k){
+          sum += LU(i,k) * LU(k,j);
+        }
+
+        LU(i,j) = (A(i,j) - sum) / LU(j,j);
+      }
+
+      for(int j = i;j < n;++j){
+        double sum = 0;
+
+        for(int k = 0;k < i;++k){
+          sum += LU(i,k) * LU(k,j);
+        }
+
+        LU(i,j) = A(i,j) - sum;
+      }
+  }
+  
   return 0;
 }
 

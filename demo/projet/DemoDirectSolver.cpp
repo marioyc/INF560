@@ -45,15 +45,12 @@ int main (
   // ---------------------------------------------------------------------------
 
 
-  MatrixDense<double,int> L;
-  MatrixDense<double,int> U;
+  MatrixDense<double,int> LU;
 
   // -- LU decomposition A = L.U
-  Factor::LU( L, U, A );
-  printf("-------------------->>>> L \n");
-  L.WriteToStdout('\n');
-  printf("-------------------->>>> U \n");
-  U.WriteToStdout('\n');
+  Factor::LU( LU, A );
+  printf("-------------------->>>> LU \n");
+  LU.WriteToStdout('\n');
 
 
 //  Vector<double,int> lu;
