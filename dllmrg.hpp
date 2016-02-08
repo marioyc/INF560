@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <limits>
 #include <complex>
+#include <fstream>
 
 // project packages
 
@@ -254,6 +255,21 @@ inline void printf (
 ////  }
 
 ////  iomrg::SetLogFinalize( );
+
+//! @brief read mrg header from ifstream stream
+//! @param [in] stream = stream (ifstream) file
+//! @param [in] mrgheader_comments = mrgheader comments
+//! @param [in] real_base = base of number inner the file
+//! @param [in] standard_base = standard base of the type of file
+//! @param [in] comment_symbol = comment symbol (first character)
+//! @return error code
+int ReadMrgHeader (
+        std::ifstream& stream,
+        std::string& mrgheader_comments,
+        int& real_base,
+        const int standard_base,
+        const char comment_symbol = '%' ) ;
+
 
 } // namespace iomrg {
 

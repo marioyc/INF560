@@ -230,5 +230,57 @@ void mrgprintflog (
 
 ________________________________________________________________________________
 
+//! @internal read mrg header from ifstream stream
+int ReadMrgHeader (
+        std::ifstream& stream,
+        std::string& mrgheader_comment,
+        int& real_base,
+        const int standard_base,
+        const char comment_symbol ) {
+
+  typedef unsigned int U;
+
+  const U N = 1024;
+  std::string buf;
+  char buf_base[N];
+
+  mrgheader_comment = "";
+  real_base = standard_base;
+  // -- read matrix market header
+  while( 1 ) {
+    std::ofstream::pos_type old_position = stream.tellg( );
+    std::getline(stream, buf);
+    if( buf.size( ) > 0 && buf.at(0) != comment_symbol ) {
+      stream.seekg( old_position );
+      break;
+    }
+
+    bool has_line_base = false;
+    // -- if base not yet determinated
+    if ( real_base == standard_base ) {
+      int base = standard_base;
+      int err_scanf = sscanf( buf.c_str( ), "%% %31s %d", buf_base, &base );
+      if ( err_scanf == 2 && ( strcmp( buf_base, "base" ) == 0 ||
+                               strcmp( buf_base, "BASE" ) == 0 ) ) {
+        real_base = base;
+        has_line_base = true;
+      }
+    }
+
+    // remove base from comment, should not be copied by error : )
+    if ( !has_line_base ) {
+      mrgheader_comment = mrgheader_comment + buf + "\n";
+    }
+  }
+
+  printf( "%s '%d' index file detected \n",
+          real_base == standard_base ? "Standard base" : "Base",
+          real_base );
+
+  return 0;
+}
+
+
+________________________________________________________________________________
 
 } // namespace iomrg {
