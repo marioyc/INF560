@@ -1,7 +1,7 @@
 /*!
 *  @file Schur.cpp
 *  @internal manage data distribution
-*  @author Abal-Kassim Cheik Ahamed, Frédéric Magoulès, Sonia Toubaline
+*  @author Abal-Kassim Cheik Ahamed, Frï¿½dï¿½ric Magoulï¿½s, Sonia Toubaline
 *  @date Tue Nov 24 16:16:48 CET 2015
 *  @version 1.0
 *  @remarks
@@ -44,6 +44,29 @@ int SplitMatrixToBlock (
         const int numb_node_i,
         const int* list_node_p,
         const int numb_node_p ) {
+  Aii.Allocate(numb_node_i,numb_node_i);
+
+  for(int i = 0;i < numb_node_i;++i)
+    for(int j = 0;j < numb_node_i;++j)
+      Aii(i,j) = A(list_node_i[i],list_node_i[j]);
+
+  App.Allocate(numb_node_p,numb_node_p);
+
+  for(int i = 0;i < numb_node_p;++i)
+    for(int j = 0;j < numb_node_[];++j)
+      App(i,j) = A(list_node_p[i],list_node_p[j]);
+
+  Aip.Allocate(numb_node_i,numb_node_p);
+
+  for(int i = 0;i < numb_node_i;++i)
+    for(int j = 0;j < numb_node_p;++j)
+      Aip(i,j) = A(list_node_i[i],list_node_p[j]);
+
+  Aip.Allocate(numb_node_p,numb_node_i);
+
+  for(int i = 0;i < numb_node_p;++i)
+    for(int j = 0;j < numb_node_i;++j)
+      Api(i,j) = A(list_node_p[i],list_node_i[j]);
 
   return 0;
 }
