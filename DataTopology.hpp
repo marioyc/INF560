@@ -337,6 +337,56 @@ int ReadLocalMatrixFromFile (
         const int proc_numb,
         const bool opt_image_matrix = false ) ;
 
+//! @brief read l2g from file
+//! @param [in] numb_global = size of the problem
+//! @param [in] numb_l2g = size of l2g
+//! @param [in] l2g = local to global pointer
+//! @param [in] file_name = file name
+//! @return error code
+int ReadL2gFromFile (
+        int& numb_global,
+        int& numb_l2g,
+        int*& l2g,
+        const char* file_name ) ;
+
+//! @brief read interfaces from file
+//! @param [in] subdom_numb = subdom number
+//! @param [in] numb_subdom = number of subdomain
+//! @param [in] numb_neighb_subdom = number of neighboring subdomain
+//! @param [in] list_neighb_subdom = list of neighboring subdomain
+//! @param [in] p_neighb2interfnode = pointer to neighbor to interface node
+//! @param [in] neighb2interfnode = neighbor to interface node
+//! @param [in] neighb2interfnode_weight = neighbor to interface node weight
+//! @param [in] file_name = file name
+//! @return error code
+int ReadNeighb2InterfaceNodeFromFile (
+        int& subdom_numb,
+        int& numb_subdom,
+        int& numb_neighb_subdom,
+        int*& list_neighb_subdom,
+        int*& p_neighb2interfnode,
+        int*& neighb2interfnode,
+        int*& neighb2interfnode_multiplicity,
+        const char* file_name ) ;
+
+//! @brief write interfaces to stdout
+//! @param [in] subdom_numb = subdom number
+//! @param [in] numb_subdom = number of subdomain
+//! @param [in] numb_neighb_subdom = number of neighboring subdomain
+//! @param [in] list_neighb_subdom = list of neighboring subdomain
+//! @param [in] p_neighb2interfnode = pointer to neighbor to interface node
+//! @param [in] neighb2interfnode = neighbor to interface node
+//! @param [in] neighb2interfnode_weight = neighbor to interface node weight
+//! @return error code
+int WriteNeighb2InterfaceNodeToStdout (
+        const int subdom_numb,
+        const int numb_subdom,
+        const int numb_neighb_subdom,
+        const int* list_neighb_subdom,
+        const int* p_neighb2interfnode,
+        const int* neighb2interfnode,
+        const int* neighb2interfnode_multiplicity ) ;
+
 } // namespace DataTopology {
 
 

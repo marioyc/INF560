@@ -8,6 +8,7 @@
 */
 
 // basic packages
+#include <cstdlib>
 
 // project packages
 #include "DataTopology.hpp"
@@ -1039,6 +1040,216 @@ int ReadLocalMatrixFromFile (
     // -- read image matrix from file csv
     A_local.ReadFromFileCsv( output_file_name );
   }
+
+  return 0;
+}
+
+________________________________________________________________________________
+
+
+//! @internal read l2g from file
+int ReadL2gFromFile (
+        int& numb_global,
+        int& numb_l2g,
+        int*& l2g,
+        const char* file_name ) {
+
+  iomrg::printf(".r. Reading L2g file: %s\n", file_name );
+
+  // open file
+  std::ifstream f_l2g( file_name, std::ios::in  );
+
+  // read mrg information
+  std::string current_line;
+  int real_base = 0;
+  const int standard_base = 0;
+  iomrg::ReadMrgHeader( f_l2g, current_line, real_base, standard_base, '%' );
+
+  // -- read new line
+  std::getline( f_l2g, current_line );
+  std::stringstream ss_current_line(current_line);
+  // first line
+  ss_current_line >> numb_l2g >> numb_global;
+
+  int offset = real_base;
+
+  l2g = new int[numb_l2g];
+  for( int i = 0; i < numb_l2g; i++ ) {
+    int value;
+    f_l2g >> value;
+    l2g[i] = value - offset;
+  }
+
+  // close file
+  f_l2g.close( );
+
+  return 0;
+}
+
+________________________________________________________________________________
+
+
+//! @internal read interfaces from file
+int ReadNeighb2InterfaceNodeFromFile (
+        int& subdom_numb,
+        int& numb_subdom,
+        int& numb_neighb_subdom,
+        int*& list_neighb_subdom,
+        int*& p_neighb2interfnode,
+        int*& neighb2interfnode,
+        int*& neighb2interfnode_multiplicity,
+        const char* file_name ) {
+
+  iomrg::printf(".r. Reading interface file: %s\n", file_name );
+
+  // -- open file
+  std::ifstream f_interf( file_name, std::ios::in  );
+
+  // -- field header variable: std::string field_header[3]
+  // >> FIELD NAME_GROintP_FIELD #FIELD
+  // >> field_header[0] := "FIELD"
+  // >> field_header[1] := "NAME_GROintP_FIELD"
+  // >> field_header[2] := "#FILED"
+  std::string field_header[3];
+  // -- field info variable: std::string field_info[4]
+  // >> name_field dimension #line int
+  // >> field_info[0] := "name_field"
+  // >> field_info[1] := "dimension"
+  // >> field_info[2] := "#line"
+  // >> field_info[3] := "int"
+  std::string field_info[4];
+
+  // ---------------------------------------------------------------------------
+  // -- first line
+  // ---------------------------------------------------------------------------
+
+  // read mrg information
+  std::string current_line;
+  int real_base = 0;
+  const int standard_base = 0;
+  iomrg::ReadMrgHeader( f_interf, current_line, real_base, standard_base, '%' );
+
+  // -- read new line
+  std::getline( f_interf, current_line );
+
+  int offset = real_base;
+
+  // ---------------------------------------------------------------------------
+  // -- FIELD SintBDOMAIN 5
+  // ---------------------------------------------------------------------------
+
+  // -- FIELD NAME_GROintP_FIELD #FIELD
+  std::stringstream ss_current_line(current_line);
+  ss_current_line >> field_header[0] >> field_header[1] >> field_header[2];
+
+  int numb_subdom_field = atoi( field_header[2].c_str( ) );
+
+  // -- name_field dimension #line int
+  // -- field #1: subdom_numb
+  f_interf >> field_info[0] >> field_info[1] >> field_info[2] >> field_info[3];
+  f_interf >> subdom_numb;
+
+  // -- field #2: numb_subdom
+  f_interf >> field_info[0] >> field_info[1] >> field_info[2] >> field_info[3];
+
+  f_interf >> numb_subdom;
+
+  // -- field #3: numb_neighb_subdom
+  f_interf >> field_info[0] >> field_info[1] >> field_info[2] >> field_info[3];
+
+  f_interf >> numb_neighb_subdom;
+
+  // -- field #4: list_neighb_subdom
+  f_interf >> field_info[0] >> field_info[1] >> field_info[2] >> field_info[3];
+
+  int tmp_numb_neighb_subdom = atoi( field_info[2].c_str() );
+
+  // read list of neighboring subdomain
+  list_neighb_subdom = new int[numb_neighb_subdom];
+  for( int i = 0; i < numb_neighb_subdom; i++ ) {
+    int neighb_subdom_node;
+    f_interf >> neighb_subdom_node;
+    list_neighb_subdom[i] = neighb_subdom_node - offset;
+  }
+
+  // -- field #5: numb_total_neighb_node
+  f_interf >> field_info[0] >> field_info[1] >> field_info[2] >> field_info[3];
+
+  int numb_total_neighb_node = 0;
+  f_interf >> numb_total_neighb_node;
+
+  // ---------------------------------------------------------------------------
+  // -- FIELD INTERFACES #INTERFACE
+  // ---------------------------------------------------------------------------
+
+  // -- FIELD INTERFACES #INTERFACE
+  f_interf >> field_header[0] >> field_header[1] >> field_header[2];
+
+  int numb_interface_field = atoi( field_header[2].c_str( ) );
+
+  // -- build p_neighb2interfnode
+  p_neighb2interfnode = new int[numb_neighb_subdom+1];
+  // -- build for each neighbor the list of nodes
+  neighb2interfnode = new int[numb_total_neighb_node];
+  // -- build for each neighbor the list of node multiplicities
+  neighb2interfnode_multiplicity = new int[numb_total_neighb_node];
+
+  p_neighb2interfnode[0] = 0;
+  for( int i = 0; i < numb_interface_field; i++ ) {
+    int ii = p_neighb2interfnode[i];
+    // -- field #i: interface#list_neighb_subdom[i]
+    f_interf >> field_info[0] >> field_info[1]
+             >> field_info[2] >> field_info[3];
+    // convert neighboring subdomain to string
+    std::stringstream ss_neighb_subdom_numb;
+    ss_neighb_subdom_numb << list_neighb_subdom[i];
+    std::string interface_name = "interface" + ss_neighb_subdom_numb.str();
+
+    int numb_neighb_node = atoi( field_info[2].c_str( ) );
+
+    // read node and multiplicity: node# multiplicity
+    for( int j = 0; j < numb_neighb_node; j++ ) {
+      int interfnode_node;
+      f_interf >> interfnode_node;
+      neighb2interfnode[j + ii] = interfnode_node - offset;
+      f_interf >> neighb2interfnode_multiplicity[j + ii];
+    }
+    // increment the number total of neighboring node
+    p_neighb2interfnode[i+1] = ii + numb_neighb_node;
+  }
+
+  // close file
+  f_interf.close( );
+
+  return 0;
+}
+
+________________________________________________________________________________
+
+//! @internal write interfaces to stdout
+int WriteNeighb2InterfaceNodeToStdout (
+        const int subdom_numb,
+        const int numb_subdom,
+        const int numb_neighb_subdom,
+        const int* list_neighb_subdom,
+        const int* p_neighb2interfnode,
+        const int* neighb2interfnode,
+        const int* neighb2interfnode_multiplicity ) {
+
+  iomrg::printf("-- subdom_numb        : %d\n", subdom_numb);
+  iomrg::printf("-- numb_subdom        : %d\n", numb_subdom);
+  iomrg::printf("-- numb_neighb_subdom : %d\n", numb_neighb_subdom);
+  iomrg::printf("-- numb_neighb_nodes  : %d\n", p_neighb2interfnode[numb_neighb_subdom]);
+  iomrg::printf("-- list_neighb_subdom : \n");
+  for ( int s = 0; s < numb_neighb_subdom; s++ ) {
+    printf("  .. neighb %d : ", list_neighb_subdom[s]);
+    for ( int i = p_neighb2interfnode[s]; i < p_neighb2interfnode[s+1]; i++ ) {
+      printf("(%d x %d) ",
+             neighb2interfnode[i], neighb2interfnode_multiplicity[i]);
+    }
+    printf("\n");
+  }
+  printf("\n");
 
   return 0;
 }
