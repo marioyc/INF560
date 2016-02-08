@@ -1,0 +1,234 @@
+/*!
+*  @file dllmrg.cpp
+*  @brief source of class dllmrg
+*  @author Abal-Kassim Cheik Ahamed, Frédéric Magoulès, Sonia Toubaline
+*  @date Tue Nov 24 16:16:48 CET 2015
+*  @version 1.0
+*  @remarks
+*/
+
+// basic packages
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include <ctime>
+
+// project packages
+#include "dllmrg.hpp"
+
+// third-party packages
+
+namespace mathmrg {
+
+//! @internal find dim_1, dim_2; dim_1 * dim_2 = dim and abs(dim_1-dim_2) -> 0
+int CreateDims (
+    int& dim_1,
+    int& dim_2,
+    int dim ) {
+
+  dim_1 = dim;
+  dim_2 = 1;
+  int i = 1;
+  int min = dim;
+  while ( i < dim ) {
+    int j = 1;
+    while ( j < dim ) {
+      int tmp = std::abs(i-j);
+      int prod = i * j;
+      if ( prod == dim && tmp < min ) {
+        dim_1 = i;
+        dim_2 = j;
+      }
+      j++;
+    }
+    i++;
+  }
+  if ( dim_1 < dim_2 ) {
+    dim_1 = dim_1 ^ dim_2;
+    dim_2 = dim_1 ^ dim_2;
+    dim_1 = dim_1 ^ dim_2;
+  }
+
+  return 0;
+}
+
+} // namespace mathmrg {
+
+________________________________________________________________________________
+
+
+//! @namespace iomrg
+namespace iomrg {
+
+________________________________________________________________________________
+
+
+//------------------------------------------------------------------------------
+//-- print and log
+//------------------------------------------------------------------------------
+
+
+bool g_enabled_stdout = true;
+bool g_enabled_logout = false;
+
+// -- file to write log of codes
+bool g_log_project = false;
+char* g_log_project_name = NULL;
+int g_log_numb_procs = 1;
+int g_log_proc_numb = 0;
+int g_log_numb_entries = 0;
+bool g_log_file_reset = false;
+bool g_log_close_file = false;
+bool g_log_project_close = false;
+char* g_log_file_name = NULL;
+FILE* g_log_file_stream = NULL;
+
+// -- control
+bool g_is_log_file_name = false;
+bool g_is_log_project_name = false;
+
+// -- formatting string
+char g_tmp_char64[64];
+char* g_tmp_char_v;
+
+________________________________________________________________________________
+
+//! @internal set log file name
+int SetLogFileName (
+        const char* file_name ) {
+
+  g_log_file_name = new char[strlen(file_name)+10];
+  strcpy( g_log_file_name, file_name );
+
+  g_is_log_file_name = true;
+
+  return 0;
+}
+
+________________________________________________________________________________
+
+//! @internal set log project name
+int SetLogProjectName (
+        const char* project_name ) {
+
+  int project_name_size = strlen(project_name);
+  g_log_project_name = new char[project_name_size+10];
+  strcpy( g_log_project_name, project_name );
+  g_tmp_char_v = new char[16+project_name_size+10];
+
+  if ( g_log_numb_procs > 1 && 0 <= g_log_proc_numb ) {
+    sprintf( g_tmp_char_v, "<%s> [%d:%d] ",
+             g_log_project_name, g_log_proc_numb, g_log_numb_procs );
+  } else {
+    strcpy( g_tmp_char_v, "" );
+  }
+
+  g_is_log_project_name = true;
+
+  return 0;
+}
+
+________________________________________________________________________________
+
+//! @internal finalize log
+int SetLogFinalize ( void ) {
+
+  if ( g_log_file_stream != NULL ) {
+    fclose( g_log_file_stream );
+    g_log_file_stream = NULL;
+  }
+  if ( g_log_project_name != NULL ) {
+    delete [] g_log_project_name;
+    g_log_project_name = NULL;
+  }
+  if ( g_log_file_name != NULL ) {
+    delete [] g_log_file_name;
+    g_log_file_name = NULL;
+  }
+  if ( g_tmp_char_v != NULL ) {
+    delete [] g_tmp_char_v;
+    g_tmp_char_v = NULL;
+  }
+
+  return 0;
+}
+
+________________________________________________________________________________
+
+//! @internal custom mrg printf
+void mrgprintf (
+        FILE* stream,
+        const char* message,
+        va_list args ) {
+
+  // -- print to stdout
+  if ( g_enabled_stdout ) {
+    if ( g_log_numb_procs > 1 && 0 <= g_log_proc_numb ) {
+      fprintf( stream, "[%d:%d] \b", g_log_proc_numb, g_log_numb_procs );
+    }
+    vfprintf( stream, message, args );
+  }
+
+}
+
+________________________________________________________________________________
+
+//! @internal custom log mrg printf
+//! @todo if file_name and project_name not assigned
+void mrgprintflog (
+        const char* message,
+        va_list args ) {
+
+  // -- print to logout (logfile)
+  if ( g_enabled_logout ) {
+    if ( g_log_project && (g_is_log_file_name && g_is_log_project_name) ) {
+      g_log_numb_entries = g_log_file_reset?0:g_log_numb_entries;
+      if ( g_log_file_stream == NULL ) {
+        const char* type_write = g_log_file_reset?"wt":"at";
+        g_log_file_stream = fopen( g_log_file_name, type_write );
+
+        g_log_file_reset = false;
+      }
+
+      if ( g_log_file_stream != NULL ) {
+        if ( g_log_numb_entries == 0 ) {
+
+
+          std::time_t l_time = std::time(NULL);
+
+          // -- local time converted to string with '\n'
+          char* local_time = std::asctime(std::localtime(&l_time));
+          int len_local_time = strlen( local_time );
+          local_time[len_local_time-1] = '\0';
+
+          // -- first line <%s> 0 Generated by ...
+          fputs( g_tmp_char_v, g_log_file_stream);
+          fprintf( g_log_file_stream, "0 log file\n" );
+          // -- second line <%s> 2 Sat Dec 20 14:05:24 2014
+          fputs( g_tmp_char_v, g_log_file_stream);
+          fprintf( g_log_file_stream, "2 %s\n", local_time );
+          // increment the numb entries
+          g_log_numb_entries = 2;
+        }
+
+        // increment the numb entries
+        g_log_numb_entries++;
+        sprintf( g_tmp_char64, "%d ", g_log_numb_entries );
+        fputs( g_tmp_char_v, g_log_file_stream);
+        fputs( g_tmp_char64, g_log_file_stream);
+
+        vfprintf( g_log_file_stream, message, args );
+        if( g_log_close_file ) {
+          fclose( g_log_file_stream );
+          g_log_file_stream = NULL;
+        }
+      }
+    }
+  }
+
+}
+
+________________________________________________________________________________
+
+
+} // namespace iomrg {
