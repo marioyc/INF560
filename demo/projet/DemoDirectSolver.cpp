@@ -65,8 +65,11 @@ int main (
 //  printf("\n cholesky\n");
 //  chol.WriteToStdout('\n');
 
-//  Vector<double,int> ldlt;
-//  DirectSolver::SolveLDLt( ldlt, A, rhs );
+  MatrixDense<double,int> ldlt;
+  Factor::LDLt( ldlt, A );
+  printf("-------------------->>>> LDLt \n");
+  ldlt.WriteToStdout('\n');
+  
 
 //  printf("\n ldlt \n");
 //  ldlt.WriteToStdout('\n');
