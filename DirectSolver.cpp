@@ -56,7 +56,7 @@ int LU (
         LU(i,j) = A(i,j) - sum;
       }
   }
-  
+
   return 0;
 }
 
@@ -70,6 +70,29 @@ ________________________________________________________________________________
 int LDLt (
         MatrixDense<double,int>& LDLt,
         const MatrixDense<double,int>& A ) {
+
+  int n = A.GetNumbRows();
+  LDLt.Allocate(n,n);
+
+  for(int i = 0;i < n;++i){
+    for(int j = 0;j <= i;++j){
+      LDLt(i,j) = A(i,j);
+    }
+  }
+
+  for(int j = 0;j < n;++j){
+    for(int k = j + 1;k < n;++k){
+      LDLt(k,j) = LDLt(k,j) / LDLt(j,j);
+    }
+
+    for(int i = j + 1;i < n;++i){
+      LDLt(i,i) = LDLt(i,i) - LDLt(i,j) * LDLt(i,j) * LDLt(j,j);
+
+      for(int k = i + 1;k < n;++k){
+        LDLt(k,i) = LDLt(k,i) - LDLt(k,j) * LDLt(i,j) * LDLt(j,j);
+      }
+    }
+  }
 
   return 0;
 }
