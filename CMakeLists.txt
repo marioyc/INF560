@@ -72,6 +72,14 @@ SET(DEMO_NAME DemoDirectSolver)
 ADD_EXECUTABLE(${DEMO_NAME} ${DEMO_DIR}/${DEMO_NAME}.cpp)
 TARGET_LINK_LIBRARIES(${DEMO_NAME} ${PROJECT_NAME} ${MPI_LIBRARIES})
 
+# ------------------------------------------------------------------------------
+# -- add executable: DemoLUSolver
+# ------------------------------------------------------------------------------
+
+SET(DEMO_NAME DemoLUSolver)
+ADD_EXECUTABLE(${DEMO_NAME} ${DEMO_DIR}/${DEMO_NAME}.cpp)
+TARGET_LINK_LIBRARIES(${DEMO_NAME} ${PROJECT_NAME} ${MPI_LIBRARIES})
+
 
 # ------------------------------------------------------------------------------
 # -- create executable: td
