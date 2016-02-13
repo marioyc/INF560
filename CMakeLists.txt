@@ -65,6 +65,14 @@ ADD_EXECUTABLE(${DEMO_NAME} ${DEMO_DIR}/${DEMO_NAME}.cpp)
 TARGET_LINK_LIBRARIES(${DEMO_NAME} ${PROJECT_NAME} ${MPI_LIBRARIES})
 
 # ------------------------------------------------------------------------------
+# -- add executable: DemoSolveSchur
+# ------------------------------------------------------------------------------
+
+SET(DEMO_NAME DemoSolveSchur)
+ADD_EXECUTABLE(${DEMO_NAME} ${DEMO_DIR}/${DEMO_NAME}.cpp)
+TARGET_LINK_LIBRARIES(${DEMO_NAME} ${PROJECT_NAME} ${MPI_LIBRARIES})
+
+# ------------------------------------------------------------------------------
 # -- add executable: DemoDirectSolver
 # ------------------------------------------------------------------------------
 
