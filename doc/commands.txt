@@ -1,0 +1,1 @@
+./DemoJacobiSequential 100 1e-7 ../input/cube-125/cube-125 csv ../output/cube-125/cube-125
