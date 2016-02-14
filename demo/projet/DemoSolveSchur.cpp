@@ -520,10 +520,10 @@ int main (
   Vector<double, int> x_global;
   x_global.Allocate( numb_global_node );
   x_global.Assign( 0, numb_global_node-1, 0.0 );
-  for ( int n = 0; n < numb_l2g; n++ ) {
-    x_global( l2g[n] ) = x_local( n );
+
+  for(int i = 0;i < numb_node_i;++i){
+    x_global(l2g[ list_node_i[i] ]) = x_i(i);
   }
-  x_global.WriteToFileCsv( gsolution_filename.c_str(), '\n' );
 
   Vector<double, int> x_total_global;
   x_total_global.Allocate( numb_global_node );
@@ -531,8 +531,18 @@ int main (
   MPI_Reduce(x_global.GetCoef(), x_total_global.GetCoef(), numb_global_node, MPI_DOUBLE, MPI_SUM, 0, mpi_comm);
 
   if(proc_numb == 0){
+    for(int i = 0;i < numb_node_p;++i){
+      x_total_global(l2g[ list_node_p[i] ]) = x_p(i);
+    }
+
     x_total_global.WriteToFileCsv(tgsolution_filename.c_str(), '\n');
   }
+
+  for(int i = 0;i < numb_node_p;++i){
+    x_global(l2g[ list_node_p[i] ]) = x_p(i);
+  }
+
+  x_global.WriteToFileCsv( gsolution_filename.c_str(), '\n' );
 
 
   delete [] l2g;
