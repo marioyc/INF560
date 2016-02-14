@@ -342,15 +342,71 @@ int main (
     MPI_Bcast(all_list_global_p[i], length_list_p[i], MPI_INT, i, mpi_comm);
   }
 
-  /*for(int i = 0;i < numb_procs;++i){
+  for(int i = 0;i < numb_procs;++i){
     for(int j = 0;j < length_list_p[i];++j){
       out_length_list << all_list_global_p[i][j] << " ";
     }
 
     out_length_list << "\n";
-  }*/
+  }
 
   iomrg::printf("%s\n", out_length_list.str().c_str());
+
+  // array from global positions to positions in S
+  int pos_S[numb_global_node];
+
+  for(int i = 0;i < numb_global_node;++i){
+    pos_S[i] = -1;
+  }
+
+  std::vector<int> S_indices;
+
+  for(int i = 0;i < numb_procs;++i){
+    for(int j = 0;j < length_list_p[i];++j){
+      S_indices.push_back(all_list_global_p[i][j]);
+    }
+  }
+
+  std::sort(S_indices.begin(), S_indices.end());
+  S_indices.erase(std::unique(S_indices.begin(), S_indices.end()), S_indices.end());
+  int size_S = S_indices.size();
+
+  for(int i = 0;i < size_S;++i){
+    pos_S[ S_indices[i] ] = i;
+  }
+
+  // Assemble S
+  MatrixDense<double, int> S;
+  S.Allocate(size_S, size_S);
+  S.Initialize(0);
+
+  double aux_coef[size_S];
+
+  iomrg::printf("size_S = %d\n",size_S);
+
+  for(int i = 0;i < numb_procs;++i){
+    int size_local_S = length_list_p[i];
+
+    for(int j = 0;j < size_local_S;++j){
+      if(proc_numb == i){
+        for(int k = 0;k < size_local_S;++k){
+          aux_coef[k] = S_local(j,k);
+        }
+      }
+
+      MPI_Bcast(aux_coef, size_local_S, MPI_DOUBLE, i, mpi_comm);
+
+      int r = pos_S[ all_list_global_p[i][j] ];
+
+      for(int k = 0;k < size_local_S;++k){
+        S(r, pos_S[ all_list_global_p[i][k] ]) += aux_coef[k];
+      }
+    }
+  }
+
+  MatrixDense<double, int> S_lu;
+  Factor::LU(S_lu, S);
+
 
 
   // -- solve Ax = b_local, by Schur Complement method
