@@ -9,6 +9,7 @@
 #include "MatrixDense.hpp"
 #include "DataTopology.hpp"
 #include "Schur.hpp"
+#include "DirectSolver.hpp"
 
 // third-party packages
 
@@ -252,6 +253,40 @@ int main (
   if(proc_numb == 0){
     K_global_total.WriteToFileCsv(gmatrix_filename.c_str());
   }
+
+  MatrixDense<double, int> Kii_lu;
+  Factor::LU(Kii_lu, Kii);
+
+
+  MatrixDense<double, int> Uii_inv,Lii_inv;
+  Lii_inv.Allocate(numb_node_i, numb_node_i);
+  Uii_inv.Allocate(numb_node_i, numb_node_i);
+
+  Vector<double, int> x,rhs;
+  rhs.Allocate(numb_node_i);
+
+  // invert Lii and Uii
+  for(int i = 0;i < numb_node_i;++i){
+    if(i > 0) rhs(i - 1) = 0;
+    rhs(i) = 1;
+    DirectSolver::Forward(x, Kii_lu, rhs);
+
+    for(int j = 0;j < numb_node_i;++j)
+      Lii_inv(j,i) = x(j);
+
+    DirectSolver::Backward(x,Kii_lu, rhs);
+
+    for(int j = 0;j < numb_node_i;++j)
+      Uii_inv(j,i) = x(j);
+  }
+
+  MatrixDense<double, int> Lpi,Uip,prod;
+  Kpi.MatrixMatrixProduct(Lpi, Uii_inv);
+  Lii_inv.MatrixMatrixProduct(Uip, Kip);
+  Lpi.MatrixMatrixProduct(prod, Uip);
+
+  MatrixDense<double, int> S_local;
+  Kpp.MatrixMatrixSubstraction(S_local, prod);
 
   // -- solve Ax = b_local, by Schur Complement method
   // synchronous communication, synchronous iteration

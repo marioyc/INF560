@@ -141,6 +141,14 @@ class MatrixDense {
         MatrixDense<T,U>& A,
         const MatrixDense<T,U>& B ) const ;
 
+    //! @brief perform the matrix-matrix addition A := this - B
+    //! @param [in,out] A = output matrix
+    //! @param [in] B = input matrix
+    //! @return error code
+    int MatrixMatrixSubstraction (
+        MatrixDense<T,U>& A,
+        const MatrixDense<T,U>& B ) const ;
+
     //! @brief perform the matrix-matrix product A := this * B
     //! @param [in,out] A = output matrix
     //! @param [in] B = input matrix

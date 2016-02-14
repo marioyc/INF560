@@ -250,6 +250,29 @@ int MatrixDense<T, U>::MatrixMatrixAddition (
 
 ________________________________________________________________________________
 
+//! @internal perform the MatrixDense-MatrixDense substraction A := this - B
+template <class T, class U>
+int MatrixDense<T, U>::MatrixMatrixSubstraction (
+        MatrixDense<T,U>& A,
+        const MatrixDense<T,U>& B ) const {
+
+  if ( !A.Status( ) ) {
+    A.Allocate( m_numb_rows, m_numb_columns );
+  }
+
+  // this: m x n, B: m x n  => A: m x n
+  for ( U i = 0; i < A.GetNumbRows( ); i++ ) {
+    for ( U j = 0; j < A.GetNumbColumns( ); j++ ) {
+      U i_j = this->GetOffset(i, j);
+      A(i,j) = m_coef[i_j] - B(i,j);
+    }
+  }
+
+  return 0;
+}
+
+________________________________________________________________________________
+
 //! @internal perform the matrix-matrix product A := this * B
 template <class T, class U>
 int MatrixDense<T, U>::MatrixMatrixProduct (
@@ -417,7 +440,7 @@ int MatrixDense<T, U>::WriteToFileCsv (
         const char separator_column,
         const char separator_row ) const {
 
-  iomrg::printf( ".w. Writing csv file (dense): %s \n", file_name );
+  //iomrg::printf( ".w. Writing csv file (dense): %s \n", file_name );
 
   // -- open file
   std::ofstream file(file_name, std::ios::out | std::ios::trunc);
