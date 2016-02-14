@@ -1,5 +1,9 @@
 ./DemoJacobiSequential 100 1e-7 ../input/cube-125/cube-125 csv ../output/cube-125/cube-125
 
+./DemoLUSolver ../input/cube-125/cube-125 ../output/cube-125/cube-125-lu
+
 mpirun -n 2 DemoSolveSchur ../input/cube-125_2/cube-125 csv ../input/cube-125_2/cube-125_b csv ../output/cube-125_2/cube-125
 
 mpirun -n 3 DemoSolveSchur ../input/cube-125_3/cube-125 csv ../input/cube-125_3/cube-125_b csv ../output/cube-125_3/cube-125
+
+diff ../output/cube-125/cube-125-lu_x.csv ../output/cube-125_2/cube-125_txg_2_000000.csv
