@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <algorithm>
+#include <vector>
 
 // project packages
 #include "Vector.hpp"
@@ -175,6 +176,30 @@ int main (
   int* l2g = NULL;
   DataTopology::ReadL2gFromFile( numb_global_node, numb_l2g, l2g,
                                  l2g_filename.c_str() );
+
+
+  // print the list of global ids in each interface
+  std::stringstream os_lists;
+
+  for(int i = 0;i <  numb_neighb_subdom;++i){
+    int s = p_neighb2interfnode[i],e = p_neighb2interfnode[i + 1];
+    std::vector<int> v;
+    os_lists << "list " << list_neighb_subdom[i] << " (" << e - s << ") :";
+
+    for(int j = s;j < e;++j){
+      v.push_back(l2g[ neighb2interfnode[j] ]);
+    }
+
+    std::sort(v.begin(),v.end());
+
+    for(int j = 0;j < v.size();++j){
+      os_lists << " " << v[j];
+    }
+
+    os_lists << "\n";
+  }
+
+  iomrg::printf("%s\n",os_lists.str().c_str());
 
   int l2i[numb_global_node];
   int l2p[numb_global_node];
