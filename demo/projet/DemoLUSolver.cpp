@@ -53,7 +53,7 @@ int main(int argc, char** argv){
   Vector<double,int> x;
   DirectSolver::SolveLU(x, A, b);
 
-  x.WriteToFileCsv(out_vector_name.c_str());
+  x.WriteToFileCsv(out_vector_name.c_str(), '\n');
 
   return 0;
 }
