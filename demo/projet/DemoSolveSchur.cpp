@@ -173,6 +173,49 @@ int main (
   int* l2g = NULL;
   DataTopology::ReadL2gFromFile( numb_global_node, numb_l2g, l2g,
                                  l2g_filename.c_str() );
+
+  int l2i[numb_global_node];
+  int l2p[numb_global_node];
+  int numb_node_i = 0,numb_node_p = 0;
+
+  for(int i = 0;i < numb_global_node;++i){
+    l2i[i] = -1;
+    l2p[i] = -1;
+  }
+
+  for(int i = 0;i < numb_neighb_nodes;++i){
+    int cur = neighb2interfnode[i];
+    if(l2p[cur] == -1){
+      l2p[cur] = numb_node_p++;
+    }
+  }
+
+  for(int i = 0,j = 0;i < numb_global_node;++i){
+    if(l2p[i] == -1){
+      l2i[i] = numb_node_i++;
+    }
+  }
+
+  int list_node_i[numb_node_i];
+  int list_node_p[numb_node_p];
+
+  for(int i = 0;i < numb_global_node;++i){
+    if(l2p[i] == -1){
+      list_node_i[ l2i[i] ] = i;
+    }else{
+      list_node_p[ l2p[i] ] = i;
+    }
+  }
+
+  MatrixDense<double,int> Kii;
+  MatrixDense<double,int> Kip;
+  MatrixDense<double,int> Kpi;
+  MatrixDense<double,int> Kpp;
+
+  Schur::SplitMatrixToBlock(Kii, Kip, Kpi, Kpp, K_local,
+                            list_node_i, numb_node_i,
+                            list_node_p, numb_node_p);
+
   // -- try to wait all processors
   MPI_Barrier( mpi_comm );
 
