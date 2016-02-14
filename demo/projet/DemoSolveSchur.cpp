@@ -122,6 +122,10 @@ int main (
   std::string gsolution_filename  = std::string(argv_output_group_name)
                                    + "_xg_" + prefix_str
                                    + "." + argv_output_group_type;
+  // sample: solution_filename = "brain_5_000003_xtg.csv"
+  std::string tgsolution_filename  = std::string(argv_output_group_name)
+                                   + "_txg_" + prefix_str
+                                   + "." + argv_output_group_type;
 
   std::string gmatrix_filename = std::string(argv_output_group_name)
                                 + "_g_" + ss_numb_procs.str()
@@ -423,6 +427,7 @@ int main (
       b_p( l2p[i] ) = b_local(i);
     }
   }
+  //b_i.WriteToFileCsv( solution_filename.c_str(), '\n' );
 
   Vector<double, int> z;
   DirectSolver::Forward(z, Kii_lu, b_i);
@@ -519,6 +524,15 @@ int main (
     x_global( l2g[n] ) = x_local( n );
   }
   x_global.WriteToFileCsv( gsolution_filename.c_str(), '\n' );
+
+  Vector<double, int> x_total_global;
+  x_total_global.Allocate( numb_global_node );
+
+  MPI_Reduce(x_global.GetCoef(), x_total_global.GetCoef(), numb_global_node, MPI_DOUBLE, MPI_SUM, 0, mpi_comm);
+
+  if(proc_numb == 0){
+    x_total_global.WriteToFileCsv(tgsolution_filename.c_str(), '\n');
+  }
 
 
   delete [] l2g;
