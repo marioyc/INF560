@@ -120,6 +120,10 @@ int main (
                                    + "_xg_" + prefix_str
                                    + "." + argv_output_group_type;
 
+  std::string gmatrix_filename = std::string(argv_output_group_name)
+                                + "_g_" + ss_numb_procs.str()
+                                + "." + argv_output_group_type;
+
   // -- read (in) matrix: local
   MatrixDense<double,int> K_local;
   if ( argv_opt_csv_matrix == 0 ) {
@@ -154,6 +158,9 @@ int main (
                                        neighb2interfnode_multiplicity,
                                        interface_filename.c_str() );
 
+  int numb_neighb_nodes = p_neighb2interfnode[numb_neighb_subdom];
+  iomrg::printf("neighbour nodes = %d\n", numb_neighb_nodes);
+
   // -- write interfaces to stdout
   DataTopology::WriteNeighb2InterfaceNodeToStdout( subdom_numb, numb_subdom,
                                      numb_neighb_subdom, list_neighb_subdom,
@@ -172,6 +179,23 @@ int main (
   // ---------------------------------------------------------------------------
   // -- processing
   // ---------------------------------------------------------------------------
+
+  // Reconstruct K
+
+  MatrixDense<double, int> K_global_partial,K_global_total;
+  K_global_partial.Allocate(numb_global_node, numb_global_node);
+  K_global_total.Allocate(numb_global_node, numb_global_node);
+  K_global_partial.Initialize(0);
+
+  DataTopology::LocalMatrixToGlobalPositions(K_local, K_global_partial, l2g);
+
+  //for(int i = 0;i < numb_global_node;++i)
+  MPI_Reduce(K_global_partial.GetCoef(), K_global_total.GetCoef(), numb_global_node * numb_global_node,
+            MPI_DOUBLE, MPI_SUM, 0, mpi_comm);
+
+  if(proc_numb == 0){
+    K_global_total.WriteToFileCsv(gmatrix_filename.c_str());
+  }
 
   // -- solve Ax = b_local, by Schur Complement method
   // synchronous communication, synchronous iteration

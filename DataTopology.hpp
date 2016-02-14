@@ -387,6 +387,11 @@ int WriteNeighb2InterfaceNodeToStdout (
         const int* neighb2interfnode,
         const int* neighb2interfnode_multiplicity ) ;
 
+void LocalMatrixToGlobalPositions(
+        const MatrixDense<double,int>& A_local,
+        MatrixDense<double,int>& A_global,
+        int* l2g);
+
 } // namespace DataTopology {
 
 
