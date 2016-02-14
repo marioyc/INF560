@@ -179,7 +179,7 @@ int main (
 
 
   // print the list of global ids in each interface
-  std::stringstream os_lists;
+  /*std::stringstream os_lists;
 
   for(int i = 0;i <  numb_neighb_subdom;++i){
     int s = p_neighb2interfnode[i],e = p_neighb2interfnode[i + 1];
@@ -199,7 +199,7 @@ int main (
     os_lists << "\n";
   }
 
-  iomrg::printf("%s\n",os_lists.str().c_str());
+  iomrg::printf("%s\n",os_lists.str().c_str());*/
 
   int l2i[numb_global_node];
   int l2p[numb_global_node];
@@ -244,7 +244,7 @@ int main (
                             list_node_p, numb_node_p);
 
   // check transpose
-  double maxd = 0;
+  /*double maxd = 0;
 
   for(int i = 0;i < numb_node_i;++i){
     for(int j = 0;j < numb_node_p;++j){
@@ -254,7 +254,7 @@ int main (
     }
   }
 
-  iomrg::printf("max difference = %.10f\n", maxd);
+  iomrg::printf("max difference = %.10f\n", maxd);*/
 
   // -- try to wait all processors
   MPI_Barrier( mpi_comm );
@@ -264,8 +264,7 @@ int main (
   // ---------------------------------------------------------------------------
 
   // Reconstruct K
-
-  MatrixDense<double, int> K_global_partial,K_global_total;
+  /*MatrixDense<double, int> K_global_partial,K_global_total;
   K_global_partial.Allocate(numb_global_node, numb_global_node);
   K_global_total.Allocate(numb_global_node, numb_global_node);
   K_global_partial.Initialize(0);
@@ -277,7 +276,7 @@ int main (
 
   if(proc_numb == 0){
     K_global_total.WriteToFileCsv(gmatrix_filename.c_str());
-  }
+  }*/
 
   MatrixDense<double, int> Kii_lu;
   Factor::LU(Kii_lu, Kii);
@@ -305,6 +304,7 @@ int main (
       Uii_inv(j,i) = x(j);
   }
 
+  // calculate S_local
   MatrixDense<double, int> Lpi,Uip,prod;
   Kpi.MatrixMatrixProduct(Lpi, Uii_inv);
   Lii_inv.MatrixMatrixProduct(Uip, Kip);
@@ -312,6 +312,46 @@ int main (
 
   MatrixDense<double, int> S_local;
   Kpp.MatrixMatrixSubstraction(S_local, prod);
+
+  // merge all numb_node_p in one list
+  int length_list_p[numb_procs];
+
+  MPI_Allgather(&numb_node_p, 1, MPI_INT, length_list_p, 1, MPI_INT, mpi_comm);
+
+  std::stringstream out_length_list;
+
+  for(int i = 0;i < numb_procs;++i){
+    out_length_list << length_list_p[i] << " ";
+  }
+
+  //int list_global_p[numb_node_p];
+
+  //for(int i = 0;i < numb_node_p;++i){
+  //  list_global_p[i] = l2g[ list_node_p[i] ];
+  //}
+
+  int all_list_global_p[numb_procs][numb_global_node];
+
+  for(int i = 0;i < numb_procs;++i){
+    if(proc_numb == i){
+      for(int j = 0;j < numb_node_p;++j){
+        all_list_global_p[i][j] = l2g[ list_node_p[j] ];//list_global_p[j];
+      }
+    }
+
+    MPI_Bcast(all_list_global_p[i], length_list_p[i], MPI_INT, i, mpi_comm);
+  }
+
+  /*for(int i = 0;i < numb_procs;++i){
+    for(int j = 0;j < length_list_p[i];++j){
+      out_length_list << all_list_global_p[i][j] << " ";
+    }
+
+    out_length_list << "\n";
+  }*/
+
+  iomrg::printf("%s\n", out_length_list.str().c_str());
+
 
   // -- solve Ax = b_local, by Schur Complement method
   // synchronous communication, synchronous iteration
