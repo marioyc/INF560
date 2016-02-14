@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#include <algorithm>
 
 // project packages
 #include "Vector.hpp"
@@ -162,10 +163,10 @@ int main (
   iomrg::printf("neighbour nodes = %d\n", numb_neighb_nodes);
 
   // -- write interfaces to stdout
-  DataTopology::WriteNeighb2InterfaceNodeToStdout( subdom_numb, numb_subdom,
+  /*DataTopology::WriteNeighb2InterfaceNodeToStdout( subdom_numb, numb_subdom,
                                      numb_neighb_subdom, list_neighb_subdom,
                                      p_neighb2interfnode, neighb2interfnode,
-                                     neighb2interfnode_multiplicity );
+                                     neighb2interfnode_multiplicity );*/
 
   // -- read l2g
   int numb_global_node = 0;
@@ -178,7 +179,7 @@ int main (
   int l2p[numb_global_node];
   int numb_node_i = 0,numb_node_p = 0;
 
-  for(int i = 0;i < numb_global_node;++i){
+  for(int i = 0;i < numb_l2g;++i){
     l2i[i] = -1;
     l2p[i] = -1;
   }
@@ -190,7 +191,7 @@ int main (
     }
   }
 
-  for(int i = 0,j = 0;i < numb_global_node;++i){
+  for(int i = 0,j = 0;i < numb_l2g;++i){
     if(l2p[i] == -1){
       l2i[i] = numb_node_i++;
     }
@@ -199,7 +200,7 @@ int main (
   int list_node_i[numb_node_i];
   int list_node_p[numb_node_p];
 
-  for(int i = 0;i < numb_global_node;++i){
+  for(int i = 0;i < numb_l2g;++i){
     if(l2p[i] == -1){
       list_node_i[ l2i[i] ] = i;
     }else{
@@ -215,6 +216,19 @@ int main (
   Schur::SplitMatrixToBlock(Kii, Kip, Kpi, Kpp, K_local,
                             list_node_i, numb_node_i,
                             list_node_p, numb_node_p);
+
+  // check transpose
+  double maxd = 0;
+
+  for(int i = 0;i < numb_node_i;++i){
+    for(int j = 0;j < numb_node_p;++j){
+      double d = Kip(i,j) - Kpi(j,i);
+      if(d < 0) d = -d;
+      maxd = std::max(maxd,d);
+    }
+  }
+
+  iomrg::printf("max difference = %.10f\n", maxd);
 
   // -- try to wait all processors
   MPI_Barrier( mpi_comm );
@@ -232,7 +246,6 @@ int main (
 
   DataTopology::LocalMatrixToGlobalPositions(K_local, K_global_partial, l2g);
 
-  //for(int i = 0;i < numb_global_node;++i)
   MPI_Reduce(K_global_partial.GetCoef(), K_global_total.GetCoef(), numb_global_node * numb_global_node,
             MPI_DOUBLE, MPI_SUM, 0, mpi_comm);
 
