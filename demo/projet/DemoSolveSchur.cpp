@@ -280,7 +280,7 @@ int main (
 
   MatrixDense<double, int> Kii_lu;
   Factor::LU(Kii_lu, Kii);
-
+  //Kii_lu.WriteToFileCsv( solution_filename.c_str());
 
   MatrixDense<double, int> Uii_inv,Lii_inv;
   Lii_inv.Allocate(numb_node_i, numb_node_i);
@@ -288,6 +288,9 @@ int main (
 
   Vector<double, int> x,rhs;
   rhs.Allocate(numb_node_i);
+
+  for(int i = 0;i < numb_node_i;++i)
+    rhs(i) = 0;
 
   // invert Lii and Uii
   for(int i = 0;i < numb_node_i;++i){
@@ -306,8 +309,10 @@ int main (
 
   // calculate S_local
   MatrixDense<double, int> Lpi,Uip,prod;
+  //Uii_inv.WriteToFileCsv( solution_filename.c_str());
   Kpi.MatrixMatrixProduct(Lpi, Uii_inv);
   Lii_inv.MatrixMatrixProduct(Uip, Kip);
+  //Lii_inv.WriteToFileCsv( solution_filename.c_str());
   Lpi.MatrixMatrixProduct(prod, Uip);
 
   MatrixDense<double, int> S_local;
@@ -404,10 +409,74 @@ int main (
     }
   }
 
-  MatrixDense<double, int> S_lu;
-  Factor::LU(S_lu, S);
+  //MatrixDense<double, int> S_lu;
+  //Factor::LU(S_lu, S);
 
+  Vector<double, int> b_i,b_p;
+  b_i.Allocate(numb_node_i);
+  b_p.Allocate(numb_node_p);
 
+  for(int i = 0;i < numb_l2g;++i){
+    if(l2p[i] == -1){
+      b_i( l2i[i] ) = b_local(i);
+    }else{
+      b_p( l2p[i] ) = b_local(i);
+    }
+  }
+
+  Vector<double, int> z;
+  DirectSolver::Forward(z, Kii_lu, b_i);
+  //z.WriteToFileCsv( solution_filename.c_str(), '\n' );
+  //Kii_lu.WriteToFileCsv(solution_filename.c_str());
+
+  Vector<double, int> aux_prod;
+  Lpi.MatrixVectorProduct(aux_prod, z);
+  //Lpi.WriteToFileCsv( solution_filename.c_str());
+  //aux_prod.WriteToFileCsv( solution_filename.c_str(), '\n' );
+  Vector<double, int> y_p_local;
+  y_p_local.Allocate(numb_node_p);
+
+  for(int i = 0;i < numb_node_p;++i){
+    y_p_local(i) = b_p(i) - aux_prod(i);
+  }
+
+  Vector<double, int> y_p(size_S);
+
+  for(int i = 0;i < size_S;++i){
+    aux_coef[i] = 0;
+  }
+
+  for(int i = 0;i < numb_node_p;++i){
+    aux_coef[ pos_S[ l2g[ list_node_p[i] ] ] ] += y_p_local(i);
+  }
+
+  MPI_Allreduce(aux_coef, y_p.GetCoef(), size_S, MPI_DOUBLE,  MPI_SUM,mpi_comm);
+
+  Vector<double, int> x_p;
+  DirectSolver::SolveLU(x_p, S, y_p);
+
+  //iomrg::printf("%d %d %d\n",Uip.GetNumbRows(),Uip.GetNumbColumns(),x_p.GetSize());
+
+  Vector<double, int> aux_prod_2;
+  Uip.MatrixVectorProduct(aux_prod_2, x_p);
+  Vector<double, int> y_i;
+  y_i.Allocate(numb_node_i);
+
+  for(int i = 0;i < numb_node_i;++i){
+    y_i(i) = z(i) - aux_prod_2(i);
+  }
+  //y_i.WriteToFileCsv( solution_filename.c_str(), '\n' );
+
+  Vector<double, int> x_i;
+  DirectSolver::Backward(x_i, Kii_lu, y_i);
+
+  /*for(int i = 0;i < numb_procs;++i){
+    for(int j = 0;j < numb_node_p;++j){
+      aux_coef[j] = y_p_local(j);
+    }
+
+    MPI_Bcast(aux_coef, numb_node_p, MPI_DOUBLE, i, mpi_comm);
+  }*/
 
   // -- solve Ax = b_local, by Schur Complement method
   // synchronous communication, synchronous iteration
@@ -419,6 +488,18 @@ int main (
 //  Schur::SolveSystem( x_local, K_local, b_local,
 //                      numb_neighb_subdom, list_neighb_subdom,
 //                      p_neighb2interfnode, neighb2interfnode, mpi_comm );
+
+  iomrg::printf("x_i.size = %d, x_p.size = %d\n",x_i.GetSize(),x_p.GetSize());
+
+  //x_i.WriteToFileCsv( solution_filename.c_str(), '\n' );
+
+  for(int i = 0;i < numb_node_i;++i){
+    x_local(list_node_i[i]) = x_i(i);
+  }
+
+  for(int i = 0;i < numb_node_p;++i){
+    x_local(list_node_p[i]) = x_p(i);
+  }
 
   // -- try to wait all processors
   MPI_Barrier( mpi_comm );
