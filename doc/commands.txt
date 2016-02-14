@@ -1,3 +1,5 @@
 ./DemoJacobiSequential 100 1e-7 ../input/cube-125/cube-125 csv ../output/cube-125/cube-125
 
-mpirun -n 3 DemoSolveSchur ../input/cube-125_3/cube-125 csv ../input/cube-125_3/cube-125 csv ../output/cube-125_3/cube-125
+mpirun -n 2 DemoSolveSchur ../input/cube-125_2/cube-125 csv ../input/cube-125_2/cube-125_b csv ../output/cube-125_2/cube-125
+
+mpirun -n 3 DemoSolveSchur ../input/cube-125_3/cube-125 csv ../input/cube-125_3/cube-125_b csv ../output/cube-125_3/cube-125
