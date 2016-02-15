@@ -248,8 +248,6 @@ int main (
   Vector<double,int> x_local(b_local.GetSize());
 
   Schur::SolveSystem( x_local, K_local, b_local,
-                      numb_neighb_subdom, list_neighb_subdom,
-                      p_neighb2interfnode, neighb2interfnode,
                       numb_node_i, list_node_i, l2i,
                       numb_node_p, list_node_p, l2p,
                       numb_global_node,

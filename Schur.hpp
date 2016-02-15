@@ -74,13 +74,9 @@ void ReconstructK(
         const MPI_Comm& mpi_comm );
 
 void SolveSystem (
-    		Vector<double, int>& x_local,
-    		const MatrixDense<double, int>& K_local,
-    		const Vector<double, int>& b_local,
-    		const int numb_neighb_subdom,
-    		const int* list_neighb_subdom,
-      	const int* p_neighb2interfnode,
-      	const int* neighb2interfnode,
+		Vector<double, int>& x_local,
+		const MatrixDense<double, int>& K_local,
+		const Vector<double, int>& b_local,
         const int numb_node_i,
         const int* list_node_i,
         const int* l2i,
