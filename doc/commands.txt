@@ -7,3 +7,17 @@ mpirun -n 2 DemoSolveSchur ../input/cube-125_2/cube-125 csv ../input/cube-125_2/
 mpirun -n 3 DemoSolveSchur ../input/cube-125_3/cube-125 csv ../input/cube-125_3/cube-125_b csv ../output/cube-125_3/cube-125
 
 diff ../output/cube-125/cube-125-lu_x.csv ../output/cube-125_2/cube-125_txg_2_000000.csv
+
+
+./DemoLUSolver ../input/cube-729/cube-729 ../output/cube-729/cube-729-lu
+
+mpirun -n 2 DemoSolveSchur ../input/cube-729_2/cube-729 csv ../input/cube-729_2/cube-729_b csv ../output/cube-729_2/cube-729
+
+diff ../output/cube-729/cube-729-lu_x.csv ../output/cube-729_2/cube-729_txg_2_000000.csv
+
+
+./DemoLUSolver ../input/cube-2197/cube-2197 ../output/cube-2197/cube-2197-lu
+
+mpirun -n 2 DemoSolveSchur ../input/cube-2197_2/cube-2197 csv ../input/cube-2197_2/cube-2197_b csv ../output/cube-2197_2/cube-2197
+
+diff ../output/cube-2197/cube-2197-lu_x.csv ../output/cube-2197_2/cube-2197_txg_2_000000.csv
