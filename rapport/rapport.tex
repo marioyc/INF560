@@ -31,8 +31,59 @@
 
 \section{Implementation}
 
+Functions implemented in DirectSolver:
+\\
+\begin{itemize}
+\item
+\textbf{LU} : Implementation of LU factorization.
+\\
+\item
+\textbf{Forward} : forward substitution for LU factorization.
+\\
+\item
+\textbf{Backward} : backward substitution for LU factorization.
+\\
+\item
+\textbf{SolveLU} : uses the three previous functions to solve $Ax = rhs$.
+\\
+\end{itemize}
 
+Functions implemented in Schur:
+\\
+\begin{itemize}
+\item
+\textbf{SplitMatrixToBlock} : given list{\_}node{\_}i and list{\_}node{\_}p it divides the given matrix A into four submatrices,
+\\
+\item
+\textbf{CheckTranspose} : given Kip and Kpi it outputs the maximum difference between the corresponding values after transposing one of the matrices.
+\\
+\item
+\textbf{LocalMatrixToGlobalPositions} : given a local matrix, it uses the array l2g to take all the values in this matrix to their original positions in a matrix
+of the size of the original matrix.
+\\
+\item
+\textbf{ReconstructK} : reconstructs the original matrix from the local parts and outputs it to the file indicated by gmatrix{\_}filename.
+\\
+\item
+\textbf{SolveSystem} : given the local matrix and the information about the interfaces it calculates x{\_}local using Algorithm 1 and Algorithm 2
+as described in the statement.
+\end{itemize}
+
+\newpage
 \section{Execution}
+
+An example of execution and test of the implementation could be done as follows:
+
+\begin{enumerate}
+\item
+./DemoLUSolver ../input/cube-125/cube-125 ../output/cube-125/cube-125-lu
+\\
+\item
+mpirun -n 2 DemoSolveSchur ../input/cube-125{\_}2/cube-125 csv ../input/cube-125{\_}2/cube-125{\_}b csv ../output/cube-125{\_}2/cube-125
+\\
+\item
+diff ../output/cube-125/cube-125-lu{\_}x.csv ../output/cube-125{\_}2/cube-125{\_}txg{\_}2{\_}000000.csv
+\end{enumerate}
 
 
 \end{document}
