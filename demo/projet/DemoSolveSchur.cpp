@@ -127,10 +127,6 @@ int main (
                                    + "_txg_" + prefix_str
                                    + "." + argv_output_group_type;
 
-  std::string gmatrix_filename = std::string(argv_output_group_name)
-                                + "_g_" + ss_numb_procs.str()
-                                + "." + argv_output_group_type;
-
   // -- read (in) matrix: local
   MatrixDense<double,int> K_local;
   if ( argv_opt_csv_matrix == 0 ) {

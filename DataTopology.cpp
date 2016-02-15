@@ -1254,19 +1254,6 @@ int WriteNeighb2InterfaceNodeToStdout (
   return 0;
 }
 
-void LocalMatrixToGlobalPositions(
-        const MatrixDense<double,int>& A_local,
-        MatrixDense<double,int>& A_global,
-        int* l2g){
-  int n = A_local.GetNumbRows();
-
-  for(int i = 0;i < n;++i){
-    for(int j = 0;j < n;++j){
-      A_global(l2g[i], l2g[j]) = A_local(i,j);
-    }
-  }
-}
-
 ________________________________________________________________________________
 
 } // namespace DataTopology {

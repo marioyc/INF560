@@ -8,6 +8,8 @@
 */
 
 // basic packages
+#include <stdio.h>
+#include <stdlib.h>
 #include <algorithm>
 #include <vector>
 
@@ -74,6 +76,64 @@ int SplitMatrixToBlock (
   return 0;
 }
 
+void CheckTranspose(
+      const MatrixDense<double,int>& Kip,
+      const MatrixDense<double,int>& Kpi) {
+  double maxd = 0;
+  int numb_node_i = Kip.GetNumbRows();
+  int numb_node_p = Kip.GetNumbColumns();
+
+  for(int i = 0;i < numb_node_i;++i){
+    for(int j = 0;j < numb_node_p;++j){
+      double d = Kip(i,j) - Kpi(j,i);
+      if(d < 0) d = -d;
+      maxd = std::max(maxd,d);
+    }
+  }
+
+  iomrg::printf("max difference = %.10f\n", maxd);
+}
+
+void LocalMatrixToGlobalPositions(
+      const MatrixDense<double,int>& A_local,
+      MatrixDense<double,int>& A_global,
+      const int* l2g){
+  int n = A_local.GetNumbRows();
+
+  for(int i = 0;i < n;++i){
+    for(int j = 0;j < n;++j){
+      A_global(l2g[i], l2g[j]) = A_local(i,j);
+    }
+  }
+}
+
+void ReconstructK(
+      const MatrixDense<double, int>& K_local,
+      const int* l2g,
+      const int numb_global_node,
+      const std::string gmatrix_filename,
+      const MPI_Comm& mpi_comm ) {
+  // -- process number (process rank)
+  int proc_numb;
+
+  // -- get current process rank
+  MPI_Comm_rank( mpi_comm, &proc_numb );
+
+  MatrixDense<double, int> K_global_partial,K_global_total;
+  K_global_partial.Allocate(numb_global_node, numb_global_node);
+  K_global_total.Allocate(numb_global_node, numb_global_node);
+  K_global_partial.Initialize(0);
+
+  LocalMatrixToGlobalPositions(K_local, K_global_partial, l2g);
+
+  MPI_Reduce(K_global_partial.GetCoef(), K_global_total.GetCoef(), numb_global_node * numb_global_node,
+            MPI_DOUBLE, MPI_SUM, 0, mpi_comm);
+
+  if(proc_numb == 0){
+    K_global_total.WriteToFileCsv(gmatrix_filename.c_str());
+  }
+}
+
 void SolveSystem (
         Vector<double, int>& x_local,
         const MatrixDense<double, int>& K_local,
@@ -112,33 +172,12 @@ void SolveSystem (
                             list_node_i, numb_node_i,
                             list_node_p, numb_node_p);
 
-  // check transpose
-  /*double maxd = 0;
-
-  for(int i = 0;i < numb_node_i;++i){
-    for(int j = 0;j < numb_node_p;++j){
-      double d = Kip(i,j) - Kpi(j,i);
-      if(d < 0) d = -d;
-      maxd = std::max(maxd,d);
-    }
-  }
-
-  iomrg::printf("max difference = %.10f\n", maxd);*/
+  // Check transpose
+  CheckTranspose(Kip, Kpi);
 
   // Reconstruct K
-  /*MatrixDense<double, int> K_global_partial,K_global_total;
-  K_global_partial.Allocate(numb_global_node, numb_global_node);
-  K_global_total.Allocate(numb_global_node, numb_global_node);
-  K_global_partial.Initialize(0);
-
-  DataTopology::LocalMatrixToGlobalPositions(K_local, K_global_partial, l2g);
-
-  MPI_Reduce(K_global_partial.GetCoef(), K_global_total.GetCoef(), numb_global_node * numb_global_node,
-            MPI_DOUBLE, MPI_SUM, 0, mpi_comm);
-
-  if(proc_numb == 0){
-    K_global_total.WriteToFileCsv(gmatrix_filename.c_str());
-  }*/
+  std::string gmatrix_filename = "../output/cube-125_2/cube-125_g_2.csv";
+  ReconstructK(K_local, l2g, numb_global_node, gmatrix_filename, mpi_comm);
 
   // LU factorization of Kii
   MatrixDense<double, int> Kii_lu;
@@ -311,7 +350,6 @@ void SolveSystem (
   Vector<double, int> aux_prod_2;
   aux_prod_2.Allocate(numb_node_i);
   aux_prod_2.Assign(0, numb_node_i - 1, 0);
-  iomrg::printf("Uip: %d, x_p: %d\n", Uip.GetNumbColumns(), x_p.GetSize());
 
   for(int i = 0;i < numb_node_i;++i){
     for(int j = 0;j < numb_node_p;++j){
