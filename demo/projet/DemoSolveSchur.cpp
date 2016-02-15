@@ -1,4 +1,5 @@
 // basic packages
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -183,7 +184,7 @@ int main (
 
 
   // print the list of global ids in each interface
-  /*std::stringstream os_lists;
+  std::stringstream os_lists;
 
   for(int i = 0;i <  numb_neighb_subdom;++i){
     int s = p_neighb2interfnode[i],e = p_neighb2interfnode[i + 1];
@@ -203,7 +204,7 @@ int main (
     os_lists << "\n";
   }
 
-  iomrg::printf("%s\n",os_lists.str().c_str());*/
+  iomrg::printf("%s\n",os_lists.str().c_str());
 
   int l2i[numb_global_node];
   int l2p[numb_global_node];
@@ -227,6 +228,8 @@ int main (
     }
   }
 
+  assert(numb_node_i + numb_node_p == numb_l2g);
+
   int list_node_i[numb_node_i];
   int list_node_p[numb_node_p];
 
@@ -237,6 +240,12 @@ int main (
       list_node_p[ l2p[i] ] = i;
     }
   }
+
+  /*std::sort(list_node_p, list_node_p + numb_node_p);
+
+  for(int i = 0;i < numb_node_p;++i){
+    l2p[ list_node_p[i] ] = i;
+  }*/
 
   MatrixDense<double,int> Kii;
   MatrixDense<double,int> Kip;
@@ -332,6 +341,7 @@ int main (
   for(int i = 0;i < numb_procs;++i){
     out_length_list << length_list_p[i] << " ";
   }
+  out_length_list << "\n";
 
   //int list_global_p[numb_node_p];
 
@@ -359,7 +369,7 @@ int main (
     out_length_list << "\n";
   }
 
-  iomrg::printf("%s\n", out_length_list.str().c_str());
+  //iomrg::printf("%s\n", out_length_list.str().c_str());
 
   // array from global positions to positions in S
   int pos_S[numb_global_node];
@@ -413,6 +423,8 @@ int main (
     }
   }
 
+  //S.WriteToFileCsv(solution_filename.c_str());
+
   //MatrixDense<double, int> S_lu;
   //Factor::LU(S_lu, S);
 
@@ -435,6 +447,7 @@ int main (
   //Kii_lu.WriteToFileCsv(solution_filename.c_str());
 
   Vector<double, int> aux_prod;
+  //iomrg::printf("Lpi: %d, z: %d\n", Lpi.GetNumbColumns(), z.GetSize());
   Lpi.MatrixVectorProduct(aux_prod, z);
   //Lpi.WriteToFileCsv( solution_filename.c_str());
   //aux_prod.WriteToFileCsv( solution_filename.c_str(), '\n' );
@@ -463,7 +476,18 @@ int main (
   //iomrg::printf("%d %d %d\n",Uip.GetNumbRows(),Uip.GetNumbColumns(),x_p.GetSize());
 
   Vector<double, int> aux_prod_2;
-  Uip.MatrixVectorProduct(aux_prod_2, x_p);
+  aux_prod_2.Allocate(numb_node_i);
+  aux_prod_2.Assign(0, numb_node_i - 1, 0);
+  iomrg::printf("Uip: %d, x_p: %d\n", Uip.GetNumbColumns(), x_p.GetSize());
+  //Uip.MatrixVectorProduct(aux_prod_2, x_p);
+
+  for(int i = 0;i < numb_node_i;++i){
+    for(int j = 0;j < numb_node_p;++j){
+      int id_S = pos_S[ l2g[ list_node_p[j] ] ];
+      aux_prod_2(i) += Uip(i,j) * x_p(id_S);
+    }
+  }
+
   Vector<double, int> y_i;
   y_i.Allocate(numb_node_i);
 
@@ -514,7 +538,7 @@ int main (
   // ---------------------------------------------------------------------------
 
   // -- plot local solution
-  x_local.WriteToFileCsv( solution_filename.c_str(), '\n' );
+  //x_local.WriteToFileCsv( solution_filename.c_str(), '\n' );
 
   // -- right only for 2 subdomains
   Vector<double, int> x_global;
