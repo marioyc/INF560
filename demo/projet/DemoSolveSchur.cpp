@@ -238,12 +238,6 @@ int main (
     }
   }
 
-  /*std::sort(list_node_p, list_node_p + numb_node_p);
-
-  for(int i = 0;i < numb_node_p;++i){
-    l2p[ list_node_p[i] ] = i;
-  }*/
-
   // -- try to wait all processors
   MPI_Barrier( mpi_comm );
 
