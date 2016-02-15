@@ -57,7 +57,24 @@ int SplitMatrixToBlock (
         const int* list_node_p,
         const int numb_node_p ) ;
 
-
+void SolveSystem (
+		Vector<double, int>& x_local,
+		const MatrixDense<double, int>& K_local,
+		const Vector<double, int>& b_local,
+		const int numb_neighb_subdom,
+		const int* list_neighb_subdom,
+  	const int* p_neighb2interfnode,
+  	const int* neighb2interfnode,
+    const int numb_node_i,
+    const int* list_node_i,
+    const int* l2i,
+    int numb_node_p,
+    const int* list_node_p,
+    const int* l2p,
+    const int numb_global_node,
+    const int numb_l2g,
+    const int* l2g,
+    const MPI_Comm& mpi_comm );
 
 
 } // namespace Schur {
